@@ -13,6 +13,17 @@
 
 #### SpaMTP Differential Peaks Analysis Functions ########################################################################################################################################################################################
 
+#' Helper function for suppressing function progress messages
+#'
+#' @param message_text Character string containing the message being shown
+#' @param verbose Boolean indicating whether to show the message. If TRUE the message will be show, else the messsage will be suppressed (default = TRUE).
+#'
+verbose_message <- function(message_text, verbose) {
+  if (verbose) {
+    message(message_text)
+  }
+}
+
 #' Runs pooling of a merged Seurat Dataset to generate pseudo-replicates for each sample
 #'       - This function is used by run_edgeR_annotations()
 #'
