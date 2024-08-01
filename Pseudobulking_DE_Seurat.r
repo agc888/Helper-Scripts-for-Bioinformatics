@@ -201,7 +201,7 @@ run_DE <- function(pooled_data, seurat_data, ident, output_dir, run_name, n, log
 #' @export
 #'
 #' @examples
-#' # FindAllDEGs(SeuratObj, "sample",DE_output_dir = "~/Documents/DE_output/", annotations = TRUE)
+#' # FindAllDEGs(SeuratObj, "sample",DE_output_dir = "~/Documents/DE_output/")
 FindAllDEGs <- function(data, ident, n = 3, logFC_threshold = 1.2, DE_output_dir = NULL, run_name = "FindAllDEGs", assay = "Spatial", slot = "counts", return.individual = FALSE, verbose = TRUE){
 
   if (!(is.null(DE_output_dir))){
