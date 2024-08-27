@@ -249,6 +249,7 @@ FindAllDEGs <- function(data, ident, n = 3, logFC_threshold = 1.2, DE_output_dir
 #' @param plot.save.width Integer value representing the width of the saved pdf plot (default = 20).
 #' @param plot.save.height Integer value representing the height of the saved pdf plot (default = 20).
 #' @param nlabels.to.show Numeric value defining the number of annotations to show per m/z (default = NULL).
+#' @param annotation_colors List of colour palette used to colour idents. If NULL default colour scheme will be used (default = NULL).
 #'
 #' @returns A heatmap plot of significantly differentially expressed peaks defined in the edgeR ouput object.
 #' @export
@@ -275,7 +276,8 @@ DEGsHeatmap <- function(edgeR_output,
                          silent = TRUE,
                          save_to_path = NULL,
                          plot.save.width = 20,
-                         plot.save.height = 20){
+                         plot.save.height = 20,
+                         annotation_colors = NULL){
 
 
   degs <- edgeR_output$DEGs
@@ -333,10 +335,18 @@ DEGsHeatmap <- function(edgeR_output,
   col_annot <- data.frame(sample = edgeR_output$samples$ident)
   row.names(col_annot) <- colnames(as.data.frame(edgeR::cpm(edgeR_output,log=TRUE)))
 
+  col_annot <- data.frame(sample = edgeR_output$samples$ident)
+  row.names(col_annot) <- colnames(as.data.frame(edgeR::cpm(edgeR_output,log=TRUE)))
+    if (!is.null(annotation_colors)){
+       annotation_colors <- list(sample = unlist(annotation_colors))
+  } else {
+      annotation_colors <- NA
+  }
+  
   mtx <- as.matrix(as.data.frame(edgeR::cpm(edgeR_output,log=TRUE))[unique(df$gene),])
 
   p <- pheatmap::pheatmap(mtx,scale=scale,color=color,cluster_cols = cluster_cols, annotation_col=col_annot, cluster_rows = cluster_rows,
-                          fontsize_row = fontsize_row, fontsize_col = fontsize_col, cutree_cols = cutree_cols, silent = silent)
+                          fontsize_row = fontsize_row, fontsize_col = fontsize_col, cutree_cols = cutree_cols, silent = silent, annotation_colors = annotation_colors)
 
    if (!(is.null(save_to_path))){
      save_pheatmap_as_pdf(pheatmap = p, filename = save_to_path, width = plot.save.width, height = plot.save.height)
