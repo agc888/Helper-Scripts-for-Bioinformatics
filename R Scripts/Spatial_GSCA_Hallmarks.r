@@ -47,7 +47,7 @@ PlotHallmarksSpatially <- function(pathway,
             titles <- title
         }
         ps <- lapply(seq_along(pathway), function(i)
-            plotCoregulationProfileSpatialX(pathway[[i]],
+            PlotHallmarksSpatially(pathway[[i]],
                                            object=object,
                                            title=titles[i],
                                            images = images,
