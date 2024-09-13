@@ -33,6 +33,7 @@ PlotHallmarksSpatially <- function(pathway,
                                             images, 
                                            title=NULL,
                                            assay=DefaultAssay(object),
+                                           slot = "scale.data",
                                            colors=c("darkblue", "lightgrey", "darkred"),
                                            guide="colourbar") {
     stopifnot(requireNamespace("Seurat"))
@@ -52,6 +53,7 @@ PlotHallmarksSpatially <- function(pathway,
                                            title=titles[i],
                                            images = images,
                                            assay=assay,
+                                           slot = slot,
                                            colors=colors))
         names(ps) <- names(pathway)
         return(ps)
@@ -101,11 +103,12 @@ PlotHallmarksSpatially <- function(pathway,
 addGesecaScores <- function(pathways,
                             object,
                             assay=DefaultAssay(object),
+                            slot = "scale.data",
                             prefix="",
                             scale=FALSE) {
     x <- GetAssay(object, assay)
-    E <- x@scale.data
-
+    E <- x[slot]
+  
     res <- object
 
 
