@@ -61,7 +61,7 @@ PlotHallmarksSpatially <- function(pathway,
 
 
 
-    obj2 <- addGesecaScores(list(pathway=pathway), object, assay=assay,
+    obj2 <- addGesecaScores(list(pathway=pathway), object, assay=assay, slot = slot,
                             scale=TRUE)
 
     p <- Seurat::SpatialFeaturePlot(obj2, features = "pathway", images = images,
