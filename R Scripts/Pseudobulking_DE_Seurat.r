@@ -237,6 +237,7 @@ FindAllDEGs <- function(data, ident, n = 3, logFC_threshold = 1.2, DE_output_dir
 #' @param logfc.threshold Numeric value that defines the logFC threshold to use for filtering significant results (default = 0.5).
 #' @param order.by Character string defining which parameter to order markers by, options are either 'FDR' or 'logFC' (default = "FDR").
 #' @param scale A character string indicating if the values should be centered and scaled in either the row direction or the column direction, or none. Corresponding values are "row", "column" and "none"
+#' @param features Character vector containing features to plot. If `NULL` will plot features based on parameters specifed above, else will override these parameters and only plot genes provided (default = NULL).
 #' @param color A vector of colors used in heatmap (default = grDevices::colorRampPalette(c("navy", "white", "red"))(50)).
 #' @param cluster_cols Boolean value determining if columns should be clustered or hclust object (default = F).
 #' @param cluster_rows Boolean value determining if rows should be clustered or hclust object (default = T).
@@ -266,6 +267,7 @@ DEGsHeatmap <- function(edgeR_output,
                          FDR.threshold = 0.05,
                          logfc.threshold = 0.5,
                          order.by = "FDR",
+                         features = NULL,
                          scale ="row",
                          color = grDevices::colorRampPalette(c("navy", "white", "red"))(50),
                          cluster_cols = F,
@@ -283,53 +285,55 @@ DEGsHeatmap <- function(edgeR_output,
   degs <- edgeR_output$DEGs
   degs <- subset(degs, FDR < FDR.threshold)
 
-  if (order.by == "FDR"){
-
-    grouped_pos<- degs %>%
-      group_by(cluster) %>%
-      filter( logFC > logfc.threshold) %>%
-      arrange(desc(regulate)) %>%
-      slice_head(n = n)
-
-
-    if (only.pos) {
-      grouped_neg <- NULL
-
-    } else {
-      grouped_neg <- degs %>%
+  if(is.null(features)){
+    if (order.by == "FDR"){
+  
+      grouped_pos<- degs %>%
         group_by(cluster) %>%
-        filter(logFC < - logfc.threshold) %>%
-        arrange(regulate) %>%
+        filter( logFC > logfc.threshold) %>%
+        arrange(desc(regulate)) %>%
         slice_head(n = n)
-    }
-    df <- do.call(rbind, list(grouped_pos,grouped_neg))
-    df <- df[order(df$cluster, dplyr::desc(df$regulate)), ]
-
-  } else {
-    if ( order.by != "logFC"){
-      warning("order.by has invalid argument. Must be either 'FDR' or 'logFC'. Heatmap defaulting to order by logFC")
-    }
-
-    grouped_pos<- degs %>%
-      group_by(cluster) %>%
-      filter(logFC > logfc.threshold) %>%
-      arrange(-logFC) %>%
-      slice_head(n = n)
-
-
-    if (only.pos) {
-      grouped_neg <- NULL
+  
+  
+      if (only.pos) {
+        grouped_neg <- NULL
+  
+      } else {
+        grouped_neg <- degs %>%
+          group_by(cluster) %>%
+          filter(logFC < - logfc.threshold) %>%
+          arrange(regulate) %>%
+          slice_head(n = n)
+      }
+      df <- do.call(rbind, list(grouped_pos,grouped_neg))
+      df <- df[order(df$cluster, dplyr::desc(df$regulate)), ]
+  
     } else {
-      grouped_neg <- degs %>%
+      if ( order.by != "logFC"){
+        warning("order.by has invalid argument. Must be either 'FDR' or 'logFC'. Heatmap defaulting to order by logFC")
+      }
+  
+      grouped_pos<- degs %>%
         group_by(cluster) %>%
-        filter(logFC < - logfc.threshold) %>%
-        arrange(logFC) %>%
+        filter(logFC > logfc.threshold) %>%
+        arrange(-logFC) %>%
         slice_head(n = n)
+  
+  
+      if (only.pos) {
+        grouped_neg <- NULL
+      } else {
+        grouped_neg <- degs %>%
+          group_by(cluster) %>%
+          filter(logFC < - logfc.threshold) %>%
+          arrange(logFC) %>%
+          slice_head(n = n)
+      }
+      df <- do.call(rbind, list(grouped_pos,grouped_neg))
+      df <- df[order(df$cluster, -df$logFC), ]
     }
-    df <- do.call(rbind, list(grouped_pos,grouped_neg))
-    df <- df[order(df$cluster, -df$logFC), ]
+  features <- df$gene
   }
-
 
 
   col_annot <- data.frame(sample = edgeR_output$samples$ident)
@@ -342,8 +346,10 @@ DEGsHeatmap <- function(edgeR_output,
   } else {
       annotation_colors <- NA
   }
+
   
-  mtx <- as.matrix(as.data.frame(edgeR::cpm(edgeR_output,log=TRUE))[unique(df$gene),])
+  
+  mtx <- as.matrix(as.data.frame(edgeR::cpm(edgeR_output,log=TRUE))[unique(features),])
 
   p <- pheatmap::pheatmap(mtx,scale=scale,color=color,cluster_cols = cluster_cols, annotation_col=col_annot, cluster_rows = cluster_rows,
                           fontsize_row = fontsize_row, fontsize_col = fontsize_col, cutree_cols = cutree_cols, silent = silent, annotation_colors = annotation_colors)
