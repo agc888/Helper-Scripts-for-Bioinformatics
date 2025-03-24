@@ -333,6 +333,8 @@ DEGsHeatmap <- function(edgeR_output,
       df <- df[order(df$cluster, -df$logFC), ]
     }
   features <- df$gene
+  } else {
+    features <- rownames(edgeR_output$counts)[rownames(edgeR_output$counts) %in% features]
   }
 
 
