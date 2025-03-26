@@ -24,7 +24,7 @@ EstimatePAM50 <- function(seurat_obj, group.by, n = 3, assay = DefaultAssay(seur
                                verbose = verbose)
 
     
-    pam50 <- read.table(here("PAM50_R", "pam50_annotation.txt"), header = TRUE, sep = "\t", fill = TRUE)
+    pam50 <- read.table(source(here("PAM50_R", "pam50_annotation.txt")), header = TRUE, sep = "\t", fill = TRUE)
 
     mtx <- pooled_data$mtx
     mtx <- mtx[rownames(mtx) %in% pam50$pcrID,]
