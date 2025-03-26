@@ -66,7 +66,7 @@ EstimatePAM50 <- function(seurat_obj, group.by, n = 3, assay = DefaultAssay(seur
     # Get Additional Functions
     ####
     
-    source(here("PAM50_R", "subtypePrediction_functions.R"))
+    source("https://raw.githubusercontent.com/agc888/Helper-Scripts-for-Bioinformatics/refs/heads/main/R%20Scripts/PAM50_R/subtypePrediction_functions.R")
     
     ## NOTE: ALL CODE BELOW HAS BEEN ADAPTED FROM 'https://genome-publications.bioinf.unc.edu/PAM50/' specifically from the 'PAM50_R/subtypePrediction_distributed.R' file. 
 
@@ -83,11 +83,11 @@ EstimatePAM50 <- function(seurat_obj, group.by, n = 3, assay = DefaultAssay(seur
     #7. Calculate Spearman's rank correlation between each sample and each subtype centroid (in pam50_centroids.txt)
     #8. Assign the class of the most highly correlated centroid to each sample
     
-    calibrationFile<- here("PAM50_R", "mediansPerDataset_v2.txt")
+    calibrationFile<- here("https://raw.githubusercontent.com/agc888/Helper-Scripts-for-Bioinformatics/refs/heads/main/R%20Scripts/PAM50_R/mediansPerDataset_v2.txt")
     
 
-    trainCentroids<- here("PAM50_R","pam50_centroids.txt")
-    trainFile<- here("PAM50_R","220arrays_nonUBCcommon+12normal_50g.txt")
+    trainCentroids<- here("https://raw.githubusercontent.com/agc888/Helper-Scripts-for-Bioinformatics/refs/heads/main/R%20Scripts/PAM50_R/pam50_centroids.txt")
+    trainFile<- here("https://raw.githubusercontent.com/agc888/Helper-Scripts-for-Bioinformatics/refs/heads/main/R%20Scripts/PAM50_R/220arrays_nonUBCcommon+12normal_50g.txt")
     proliferationGenes<-c("CCNB1","UBE2C","BIRC5","KNTC2","CDC20","PTTG1","RRM2","MKI67","TYMS","CEP55","CDCA1")
     stdArray<-stdArray # just for visualization, and only set to F if many missing genes
     
