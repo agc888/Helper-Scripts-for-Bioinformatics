@@ -45,7 +45,7 @@ EstimatePAM50 <- function(seurat_obj, group.by, n = 3, assay = DefaultAssay(seur
                                verbose = verbose)
 
     
-    pam50 <- read.table("https://github.com/agc888/Helper-Scripts-for-Bioinformatics/blob/main/R%20Scripts/PAM50_R/pam50_annotation.txt", header = TRUE, sep = "\t", fill = TRUE)
+    pam50 <- read.table("https://raw.githubusercontent.com/agc888/Helper-Scripts-for-Bioinformatics/refs/heads/main/R%20Scripts/PAM50_R/pam50_annotation.txt", header = TRUE, sep = "\t", fill = TRUE)
 
     mtx <- pooled_data$mtx
     mtx <- mtx[rownames(mtx) %in% pam50$pcrID,]
