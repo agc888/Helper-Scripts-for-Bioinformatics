@@ -328,11 +328,10 @@ EstimatePAM50 <- function(seurat_obj, group.by, n = 3, assay = DefaultAssay(seur
 
     
     df <- do.call(rbind, df)
-    
-    return(df)
-    
+    rownames(df) <- names(pooled_data$id)
+      
     verbose_message(message_text = "Adding results to Seurat Object", verbose = verbose)
-
+    
 
     # Reorder df to match the rownames of the Seurat object metadata
     df <- df[rownames(seurat_obj@meta.data), , drop = FALSE]
