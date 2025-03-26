@@ -333,7 +333,8 @@ EstimatePAM50 <- function(seurat_obj, group.by, n = 3, assay = DefaultAssay(seur
 
     # Reorder df to match the rownames of the Seurat object metadata
     df <- df[rownames(seurat_obj@meta.data), , drop = FALSE]
-    
+
+    return(df)
     # Add the data frame as metadata
     seurat_obj <- AddMetaData(seurat_obj, metadata = df)
 
