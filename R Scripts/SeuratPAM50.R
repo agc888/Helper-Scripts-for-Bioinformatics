@@ -329,10 +329,11 @@ EstimatePAM50 <- function(seurat_obj, group.by, n = 3, assay = DefaultAssay(seur
     
     df <- do.call(rbind, df)
     
-    verbose_message(message_text = "Adding results to Seurat Object", verbose = verbose)
-
     return(df)
     
+    verbose_message(message_text = "Adding results to Seurat Object", verbose = verbose)
+
+
     # Reorder df to match the rownames of the Seurat object metadata
     df <- df[rownames(seurat_obj@meta.data), , drop = FALSE]
     seurat_obj <- AddMetaData(seurat_obj, metadata = df)
