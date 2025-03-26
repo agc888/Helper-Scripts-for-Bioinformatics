@@ -6,13 +6,35 @@ library(dplyr)
 library(stringr)
 library(SingleCellExperiment)
 library(scater)
-library(edgeR)
-library(pheatmap)
-library(limma)
 library(utils)
 library(stats)
 library(grDevices)
 
+#' Estimate PAM50 Subtype and Risk Scores
+#'
+#' This function performs PAM50 subtype prediction and calculates genomic and risk scores 
+#' based on a given Seurat object. It supports multiple input configurations and provides 
+#' options for visualizations and data export.
+#'
+#' @param seurat_obj A Seurat object containing the expression data for the analysis.
+#' @param group.by A character string specifying the metadata column to group cells by (e.g., cluster labels).
+#' @param n An integer specifying the number of groups to pool for the analysis. Default is 3.
+#' @param assay The assay to use for retrieving expression data. Defaults to the active assay of the Seurat object.
+#' @param slot The slot from the assay to retrieve data from. Default is "counts".
+#' @param save_plots_to A character string specifying the directory to save generated plots. If NULL, no plots are saved.
+#' @param collapseMethod A character string specifying the method to collapse data. Options are "mean" (default) or "iqr".
+#' @param tumour_mass_column A character string specifying the column name in the Seurat object's metadata 
+#'        containing tumour mass information (if available). If NULL, tumour size data is not included.
+#' @param calibrationParameters A numeric or NA value specifying the column of the calibration file to use. 
+#'        NA will center within the test set; -1 will apply no calibration.
+#' @param stdArray A logical value indicating whether to standardize the array data for visualization. Default is TRUE.
+#' @param verbose A logical value indicating whether to print progress messages. Default is TRUE.
+#'
+#' @return A list containing the PAM50 subtype predictions, risk scores, and related data.
+#'
+#' # REQUIRED PACKAGES: ctc, heatmap.plus, Seurat, ggplot2, dplyr, stringr, SingleCellExperiment, scater, utils, stats, grDevices
+#'
+#'@export
 EstimatePAM50 <- function(seurat_obj, group.by, n = 3, assay = DefaultAssay(seurat_obj),slot = "counts", save_plots_to = NULL,collapseMethod = "mean", tumour_mass_column = NULL, calibrationParameters = NA,stdArray = TRUE, verbose = TRUE){
     
     pooled_data <- run_pooling(data.filt = seurat_obj,
@@ -148,7 +170,7 @@ EstimatePAM50 <- function(seurat_obj, group.by, n = 3, assay = DefaultAssay(seur
     }else{
         xhr=1
     }
-    y<-readarray(mtx,hr=xhr,method=collapseMethod,impute=F)
+    y<-mtxToArray(mtx,hr=xhr,method=collapseMethod,impute=F)
     
     # normalization
     if(is.na(calibrationParameters)){
@@ -359,5 +381,93 @@ run_pooling <- function(data.filt, idents, n, assay, slot, verbose = TRUE) {
   return(list("mtx" = SingleCellExperiment::counts(summed),
              "ids" = ids))
 }
+
+
+#' @title Overlap two datasets
+#'
+#' @description
+#' Formatting function to read arrays and format for use in the claudinLow classifier.
+#'
+#' @usage
+#' readArray(dataFile,designFile=NA,hr=1,impute=TRUE,method="mean")
+#'
+#' @param x matrix to convert
+#' @param designFile Design of file.
+#' @param hr Header rows as Present (2) or Absent (1).
+#' @param impute whether data will be imputed or not.
+#' @param method Default method is "mean".
+#'
+#' @return
+#' A list
+#'
+#' @references
+#' citation("claudinLow")
+#'
+#' @seealso
+#' [genefu::claudinLow]
+#'
+#' @md
+#' @importFrom impute impute.knn
+#' @export
+mtxToArray <- function(x, designFile=NA, hr=1, impute=FALSE, method="mean")
+{
+
+  headerRows <- hr
+
+  if(headerRows==1){
+    sampleNames<-as.vector(t(x[1,-1]))
+    x<-x[-1,]
+    classes<-NULL
+    ids<-x[,1]
+    xd<-x[,-1]
+    xd<-apply(xd,2,as.numeric)
+    xd<-collapseIDs(xd,ids,method)
+  }else{
+    sampleNames<-as.vector(t(x[1,-1]))
+    x<-x[-1,]
+
+    classes<-x[1:(headerRows-1),]
+    dimnames(classes)[[1]]<-classes[,1]
+    classes<-classes[,-1]
+    classes[classes==""]<-NA
+    classes<-t(classes)
+    rownames(classes)<-sampleNames
+    classes<-as.data.frame(classes)
+
+    xd<-x[(-1:-(headerRows-1)),]
+    ids<-as.vector(t(xd[,1]))
+    xd<-xd[,-1]
+    xd<-apply(xd,2,as.numeric)
+    xd<-collapseIDs(xd,ids,method)
+  }
+
+  features<- dim(xd)[1]
+  samples<- dim(xd)[2]
+  geneNames<-rownames(xd)
+  xd<-apply(xd,2,as.numeric)
+  rownames(xd)<-geneNames
+  colnames(xd)<-sampleNames
+
+  if(!is.na(designFile)){
+    x<-read.table(designFile,sep="\t", header=TRUE, row.names=1, fill=TRUE,
+                  stringsAsFactors=FALSE)
+    xd<-xd[,sort.list(colnames(xd))]
+    xd<-xd[,colnames(xd) %in% rownames(x)]
+    x<-x[rownames(x) %in% colnames(xd),]
+    x<-x[sort.list(rownames(x)),]
+    classes<-as.data.frame(x)
+  }
+
+  if(sum(apply(xd,2,is.na))>0 & impute){
+    #library(impute)
+    allAnn<-dimnames(xd)
+    data.imputed<-impute.knn(as.matrix(xd))$data
+    xd<-data.imputed[1:features,]
+    dimnames(xd)<-allAnn
+  }
+
+  return(list(xd=xd, classes=classes, nfeatures=features, nsamples=samples, fnames=geneNames, snames=sampleNames))
+}
+
 
 
