@@ -170,6 +170,15 @@ EstimatePAM50 <- function(seurat_obj, group.by, n = 3, assay = DefaultAssay(seur
     }else{
         xhr=1
     }
+
+    mtx <- as.data.frame(mtx)
+    row1 <- colnames(mtx)
+    colnames(mtx) <- paste0("V", 1:ncol(mtx))
+ 
+    # Combine the new row with the existing matrix
+    mtx <- rbind(row1, mtx)
+
+    
     y<-mtxToArray(mtx,hr=xhr,method=collapseMethod,impute=F)
     
     # normalization
