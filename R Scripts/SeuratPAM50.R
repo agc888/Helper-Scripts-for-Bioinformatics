@@ -172,12 +172,12 @@ EstimatePAM50 <- function(seurat_obj, group.by, n = 3, assay = DefaultAssay(seur
     }
 
     mtx <- as.data.frame(mtx)
-    row1 <- colnames(mtx)
+    mtx$Gene <- rownames(mtx)
+    mtx <- rbind(colnames(mtx), mtx)  # Insert column names as the first row
+    mtx <- mtx[c("Gene", colnames(mtx)[1:(length(colnames(mtx))-1)])]
+    rownames(mtx) <- NULL
+    mtx$Gene[1] <- ""
     colnames(mtx) <- paste0("V", 1:ncol(mtx))
- 
-    # Combine the new row with the existing matrix
-    mtx <- rbind(row1, mtx)
-
     
     y<-mtxToArray(mtx,hr=xhr,method=collapseMethod,impute=F)
     
