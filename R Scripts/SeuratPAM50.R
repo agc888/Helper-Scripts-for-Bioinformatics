@@ -187,7 +187,7 @@ EstimatePAM50 <- function(seurat_obj, group.by, n = 3, assay = DefaultAssay(seur
     }else{
         if(calibrationParameters != -1){
             medians<-readarray(calibrationFile,hr=1)
-            print(paste("calibration to:",dimnames(medians$xd)[[2]][calibrationParameters]))
+            verbose_message(message_text = paste("calibration to:",dimnames(medians$xd)[[2]][calibrationParameters]), verbose = verbose)
             tm<-overlapSets(medians$xd,y$xd)
             y$xd<-(tm$y-tm$x[,calibrationParameters])
             #y$xd<-(tm$y-tm$x[,calibrationParameters])/tm$x[,15]
