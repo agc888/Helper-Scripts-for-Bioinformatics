@@ -1,70 +1,3 @@
-verbose_message <- function(message_text, verbose) {
-  if (verbose) {
-    message(message_text)
-  }
-}
-
-#' Runs pooling of a merged Seurat Dataset to generate pseudo-replicates for each sample
-#'       - This function is used by run_edgeR_annotations()
-#'
-#' @param data.filt A Seurat Object containing count values for pooling.
-#' @param idents A character string defining the idents column to pool the data against.
-#' @param n An integer defining the amount of pseudo-replicates to generate for each sample (default = 3).
-#' @param assay Character string defining the assay where the mz count data and annotations are stored (default = "Spatial").
-#' @param slot Character string defining the assay storage slot to pull the relative mz intensity values from (default = "counts").
-#' @param verbose Boolean indicating whether to show the message. If TRUE the message will be show, else the message will be suppressed (default = TRUE).
-#'
-#' @returns A SinglCellExpereiment object which contains pooled (n)-pseudo-replicate counts data based on the Seurat Object input
-#' @export
-#'
-#' @examples
-#' # run_pooling <- list(seuratObj, idents = "sample", n = 3, assay = "Spatial", slot = "counts")
-run_pooling <- function(data.filt, idents, n, assay, slot, verbose = TRUE) {
-
-  cell_metadata <- data.filt@meta.data
-  samples <- unique(cell_metadata[[idents]])
-
-  verbose_message(message_text = paste0("Pooling one sample into ", n ," replicates..."), verbose = verbose)
-
-  nrg <- n
-  
-  for(i in c(1:length(samples))){
-    set.seed(i)
-    wo<-which(cell_metadata[[idents]]== samples[i])
-    cell_metadata[wo,'orig.ident2']<-paste(samples[i],sample(c(1:n),length(wo)
-                                                             ,replace=T,prob=rep(1/nrg,nrg)),sep='_')
-  }
-  gene_data <- row.names(data.filt)
-  filtered.sce <- SingleCellExperiment::SingleCellExperiment(assays = list(counts = data.filt[[assay]][slot]),
-                                       colData = cell_metadata)
-
-
-  tempf=strsplit(filtered.sce@colData[["orig.ident2"]],'_')
-  pid=NULL
-  for(i in 1:length(tempf)){
-    pidone=tempf[[i]]
-    if(length(pidone)!=3){
-      pidone=c(pidone[1],'yes',pidone[2])
-    }
-    pid=rbind(pid,pidone)
-  }
-
-  filtered.sce@colData$type=pid[,2]
-
-  summed <- scater::aggregateAcrossCells(filtered.sce,
-                                 id=SingleCellExperiment::colData(filtered.sce)[,'orig.ident2'])
-
-
-  ids <- SingleCellExperiment::colData(filtered.sce)[,'orig.ident2']
-  names(ids) <- rownames(cell_metadata)
-    
-  return(list("mtx" = SingleCellExperiment::counts(summed),
-             "ids" = ids))
-}
-
-
-
-
 library(ctc)
 library(heatmap.plus)
 library(here)
@@ -363,3 +296,69 @@ EstimatePAM50 <- function(seurat_obj, group.by, n = 3, assay = DefaultAssay(seur
     return(outtable)
 
 }
+
+verbose_message <- function(message_text, verbose) {
+  if (verbose) {
+    message(message_text)
+  }
+}
+
+#' Runs pooling of a merged Seurat Dataset to generate pseudo-replicates for each sample
+#'       - This function is used by run_edgeR_annotations()
+#'
+#' @param data.filt A Seurat Object containing count values for pooling.
+#' @param idents A character string defining the idents column to pool the data against.
+#' @param n An integer defining the amount of pseudo-replicates to generate for each sample (default = 3).
+#' @param assay Character string defining the assay where the mz count data and annotations are stored (default = "Spatial").
+#' @param slot Character string defining the assay storage slot to pull the relative mz intensity values from (default = "counts").
+#' @param verbose Boolean indicating whether to show the message. If TRUE the message will be show, else the message will be suppressed (default = TRUE).
+#'
+#' @returns A SinglCellExpereiment object which contains pooled (n)-pseudo-replicate counts data based on the Seurat Object input
+#' @export
+#'
+#' @examples
+#' # run_pooling <- list(seuratObj, idents = "sample", n = 3, assay = "Spatial", slot = "counts")
+run_pooling <- function(data.filt, idents, n, assay, slot, verbose = TRUE) {
+
+  cell_metadata <- data.filt@meta.data
+  samples <- unique(cell_metadata[[idents]])
+
+  verbose_message(message_text = paste0("Pooling one sample into ", n ," replicates..."), verbose = verbose)
+
+  nrg <- n
+  
+  for(i in c(1:length(samples))){
+    set.seed(i)
+    wo<-which(cell_metadata[[idents]]== samples[i])
+    cell_metadata[wo,'orig.ident2']<-paste(samples[i],sample(c(1:n),length(wo)
+                                                             ,replace=T,prob=rep(1/nrg,nrg)),sep='_')
+  }
+  gene_data <- row.names(data.filt)
+  filtered.sce <- SingleCellExperiment::SingleCellExperiment(assays = list(counts = data.filt[[assay]][slot]),
+                                       colData = cell_metadata)
+
+
+  tempf=strsplit(filtered.sce@colData[["orig.ident2"]],'_')
+  pid=NULL
+  for(i in 1:length(tempf)){
+    pidone=tempf[[i]]
+    if(length(pidone)!=3){
+      pidone=c(pidone[1],'yes',pidone[2])
+    }
+    pid=rbind(pid,pidone)
+  }
+
+  filtered.sce@colData$type=pid[,2]
+
+  summed <- scater::aggregateAcrossCells(filtered.sce,
+                                 id=SingleCellExperiment::colData(filtered.sce)[,'orig.ident2'])
+
+
+  ids <- SingleCellExperiment::colData(filtered.sce)[,'orig.ident2']
+  names(ids) <- rownames(cell_metadata)
+    
+  return(list("mtx" = SingleCellExperiment::counts(summed),
+             "ids" = ids))
+}
+
+
