@@ -14,8 +14,10 @@ BuildNicheAssay.using_all_fovs <- function(
   
   for (fov in names(object@images)) {
     coords <- GetTissueCoordinates(object[[fov]], which = "centroids")
-    cells <- coords$cell
-  
+    if (!"cell" %in% colnames(coords)){
+        cells <- rownames(coords)
+    }
+     
     rownames(coords) <- cells
     if ("imagerow" %in% colnames(coords)){
           coords$x <- coords$imagerow
