@@ -1,0 +1,92 @@
+# Modified version of Seurats BuildNicheAssay that runs acros all fovs at once.
+BuildNicheAssay.using_all_fovs <- function(
+  object,
+  group.by,
+  assay = "niche",
+  neighbors.k = 20,
+  niches.k = 4
+) {
+  
+  # empty
+  neighbors.all <- list()
+  neighbors.all$nn  <- SparseEmptyMatrix(0,0)
+  neighbors.all$snn <- SparseEmptyMatrix(0,0)
+  
+  for (fov in names(object@images)) {
+    coords <- GetTissueCoordinates(object[[fov]], which = "centroids")
+    cells <- coords$cell
+  
+    rownames(coords) <- cells
+    coords <- as.matrix(coords[ , c("x", "y")])
+    neighbors    <- FindNeighbors(coords, k.param = neighbors.k)
+    neighbors$nn <- neighbors$nn[Cells(object[[fov]]), Cells(object[[fov]])]
+    
+    # Merge with previous
+    neighbors.all <- merge_neighbours(neighbors.all, neighbors) 
+  }
+  # rename
+  neighbors <- neighbors.all
+  
+  # Need a list of all those cells, used later.
+  # put all cells into one list (being sure order matches network, might not match object order.)
+  cells <- colnames(neighbors$nn)
+  
+  
+  # Continuouing on the BuildNicheAssay function
+  # build cell x cell type matrix
+  ct.mtx <- matrix(
+    data = 0,
+    nrow = length(cells),
+    ncol = length(unlist(unique(object[[group.by]])))
+  )
+  rownames(ct.mtx) <- cells
+  colnames(ct.mtx) <- unique(unlist(object[[group.by]]))
+  cts <- object[[group.by]]
+  for (i in 1:length(cells)) {
+    ct <- as.character(cts[cells[[i]], ])
+    ct.mtx[cells[[i]], ct] <- 1
+  }
+  
+  # create niche assay
+  sum.mtx <- as.matrix(neighbors$nn %*% ct.mtx)
+  niche.assay <- CreateAssayObject(counts = t(sum.mtx))
+  object[[assay]] <- niche.assay
+  DefaultAssay(object) <- assay
+  
+  
+  
+  # cluster niches assay
+  object <- ScaleData(object)
+  results <- kmeans(
+    x = t(object[[assay]]@scale.data),
+    centers = niches.k,
+    nstart = 30
+  )
+  object$niches <- results[["cluster"]]
+  
+  return(object)
+  
+  
+}
+
+# cells on different slides will never be neighbours. (take that 3d nonsense elshewre.)
+merge_neighbours <- function (neighbors1, neighbors2) {
+  # in the main objects, onlysnn is a Graph object. I wonder if nn is only accidentally not.
+  neighbors <- list()
+  neighbors$nn <- merge_non_overlapping_sparse_matricies(neighbors1$nn, neighbors2$nn)
+  neighbors$snn <- SeuratObject::as.Graph(merge_non_overlapping_sparse_matricies(neighbors1$snn, neighbors2$snn) ) 
+  return(neighbors)
+}
+
+
+merge_non_overlapping_sparse_matricies <- function(n1, n2) {
+  
+  filler_top_right   <- SparseEmptyMatrix(nrow     = nrow(n1),     ncol     = ncol(n2), 
+                                          rownames = rownames(n1), colnames = colnames(n2) )
+  filler_bottom_left <- SparseEmptyMatrix(nrow     = nrow(n2),     ncol     = ncol(n1),
+                                          rownames = rownames(n2), colnames = colnames(n1) )
+  n <-   rbind( cbind(n1,                  filler_top_right), 
+                cbind(filler_bottom_left, n2              ) )
+  return(n)
+}
+
