@@ -17,6 +17,10 @@ BuildNicheAssay.using_all_fovs <- function(
     cells <- coords$cell
   
     rownames(coords) <- cells
+    if ("imagerow" %in% colnames(coords)){
+          coords$x <- coords$imagerow
+          coords$y <- coords$imagecol
+    }
     coords <- as.matrix(coords[ , c("x", "y")])
     neighbors    <- FindNeighbors(coords, k.param = neighbors.k)
     neighbors$nn <- neighbors$nn[Cells(object[[fov]]), Cells(object[[fov]])]
