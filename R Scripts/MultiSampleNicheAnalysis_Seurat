@@ -123,6 +123,51 @@ graph_obj <- as.Graph(nn_matrix)
 
 
 
+vis_kneighbors_graph <- function(location, n_neighbors, include_self = FALSE, alg = "kd_tree") {
+  
+# Get the k-nearest neighbors using kd_tree (most similar to scikit-learn's default)
+  knn_result <- FNN::get.knn(location, k = n_neighbors, algorithm = alg)
+
+
+    # Step 1: Flatten the distances and indices
+    N <- nrow(knn_result$nn.index)
+
+    # Reshape distances and column indices
+    dists <- as.vector(t(knn_result$nn.dist))
+    col_indices <- as.vector(t(knn_result$nn.index))
+
+    # Create row indices (equivalent to np.repeat())
+    row_indices <- rep(1:N, each = n_neighbors)
+
+    # Apply neighbor correction if needed
+
+    dist_cutoff <- median(dists) * 1.3  # Small amount of sway
+    mask <- dists < dist_cutoff
+
+    # Filter using the mask
+    row_indices <- row_indices[mask]
+    col_indices <- col_indices[mask]
+    dists <- dists[mask]
+
+    adjacency <- sparseMatrix(
+      i = row_indices,
+      j = col_indices,
+      x = rep(1, length(row_indices)),
+      dims = c(N, N),
+      repr = "C"  # Ensures a "dgCMatrix" (like CSR in Python)
+    )
+
+  # Include self-loops if requested (in this case, no)
+  if (include_self) {
+    diag(adjacency) <- 1
+  }
+  adjacency <- 0.5 * (adjacency + t(adjacency))
+
+  graph <- as.Graph(adjacency)
+  return(graph)
+}
+
+
 
 
 
