@@ -4,7 +4,8 @@ BuildNicheAssay.using_all_fovs <- function(
   group.by,
   assay = "niche",
   neighbors.k = 20,
-  niches.k = 4
+  niches.k = 4,
+  platform = "ST"
 ) {
   
   # empty
@@ -26,6 +27,16 @@ BuildNicheAssay.using_all_fovs <- function(
           coords$y <- coords$imagecol
     }
     coords <- as.matrix(coords[ , c("x", "y")])
+
+    if (platform == "ST"){
+        neighbors <- FindNeighbors(coords, k.param = neighbors.k)  
+    } else if (platform == "Visium"){
+      print("visium")
+    } else {
+        stop("Inncorect value for `platfrom`! platform must be either 'ST' or 'Visium' ...")
+    }
+
+
     neighbors    <- FindNeighbors(coords, k.param = neighbors.k)
     neighbors$nn <- neighbors$nn[Cells(object[[fov]]), Cells(object[[fov]])]
     
@@ -97,6 +108,25 @@ merge_non_overlapping_sparse_matricies <- function(n1, n2) {
                 cbind(filler_bottom_left, n2              ) )
   return(n)
 }
+
+
+
+
+
+
+
+
+
+
+graph_obj <- as.Graph(nn_matrix)
+
+
+
+
+
+
+
+
 
 ComputeSNN <- function(nn_ranked, prune) {
     .Call('_Seurat_ComputeSNN', PACKAGE = 'Seurat', nn_ranked, prune)
