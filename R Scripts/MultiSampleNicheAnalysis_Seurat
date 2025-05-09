@@ -153,6 +153,8 @@ vis_kneighbors_graph <- function(location, n_neighbors, include_self = FALSE, al
     diag(adjacency) <- 1
   }
   adjacency <- 0.5 * (adjacency + t(adjacency))
+  
+  rownames(adjacency) <- colnames(adjacency) <- rownames(location)
 
   graph <- as.Graph(adjacency)
   return(graph)
