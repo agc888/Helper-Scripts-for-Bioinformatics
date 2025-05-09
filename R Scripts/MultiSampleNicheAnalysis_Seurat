@@ -31,13 +31,41 @@ BuildNicheAssay.using_all_fovs <- function(
     if (platform == "ST"){
         neighbors <- FindNeighbors(coords, k.param = neighbors.k)  
     } else if (platform == "Visium"){
-      print("visium")
+        # Custom nearest neighbor logic
+        knn_result <- FNN::get.knn(coords, k = neighbors.k, algorithm = "kd_tree")
+    
+        N <- nrow(knn_result$nn.index)
+        dists <- as.vector(t(knn_result$nn.dist))
+        col_indices <- as.vector(t(knn_result$nn.index))
+        row_indices <- rep(1:N, each = neighbors.k)
+    
+        # Cutoff filtering
+        dist_cutoff <- median(dists) * 1.3
+        mask <- dists < dist_cutoff
+        row_indices <- row_indices[mask]
+        col_indices <- col_indices[mask]
+    
+        # Create sparse adjacency matrix (binary nn graph)
+        adjacency_nn <- Matrix::sparseMatrix(
+          i = row_indices,
+          j = col_indices,
+          x = 1,
+          dims = c(N, N),
+          repr = "C"
+        )
+        rownames(adjacency_nn) <- rownames(coords)
+        colnames(adjacency_nn) <- rownames(coords)
+    
+        # Create symmetric version
+        adjacency_snn <- 0.5 * (adjacency_nn + t(adjacency_nn))
+        adjacency_snn <- SeuratObject::as.Graph(adjacency_snn)
+    
+        # Store in format compatible with ST branch
+        neighbors <- list(nn = adjacency_nn, snn = adjacency_snn)
     } else {
         stop("Inncorect value for `platfrom`! platform must be either 'ST' or 'Visium' ...")
     }
 
-
-    neighbors    <- FindNeighbors(coords, k.param = neighbors.k)
     neighbors$nn <- neighbors$nn[Cells(object[[fov]]), Cells(object[[fov]])]
     
     # Merge with previous
