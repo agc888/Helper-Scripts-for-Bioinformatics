@@ -114,15 +114,6 @@ merge_non_overlapping_sparse_matricies <- function(n1, n2) {
 
 
 
-
-
-
-
-graph_obj <- as.Graph(nn_matrix)
-
-
-
-
 vis_kneighbors_graph <- function(location, n_neighbors, include_self = FALSE, alg = "kd_tree") {
   
 # Get the k-nearest neighbors using kd_tree (most similar to scikit-learn's default)
