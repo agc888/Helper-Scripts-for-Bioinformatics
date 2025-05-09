@@ -98,3 +98,6 @@ merge_non_overlapping_sparse_matricies <- function(n1, n2) {
   return(n)
 }
 
+ComputeSNN <- function(nn_ranked, prune) {
+    .Call('_Seurat_ComputeSNN', PACKAGE = 'Seurat', nn_ranked, prune)
+}
